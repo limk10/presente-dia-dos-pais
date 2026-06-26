@@ -25,9 +25,9 @@ export default function WaitingView({ slug }: { slug: string }) {
 
     async function verificar() {
       try {
-        const res = await fetch(`/api/status/${slug}`, {
+        // Timestamp garante URL única em cada poll — sem cache de CDN
+        const res = await fetch(`/api/status/${slug}?_=${Date.now()}`, {
           cache: "no-store",
-          headers: { "Cache-Control": "no-cache" },
         });
         if (!res.ok) return;
         const json = await res.json();
@@ -54,9 +54,8 @@ export default function WaitingView({ slug }: { slug: string }) {
     setVerificando(true);
     setErroMsg("");
     try {
-      const res = await fetch(`/api/status/${slug}`, {
+      const res = await fetch(`/api/status/${slug}?_=${Date.now()}`, {
         cache: "no-store",
-        headers: { "Cache-Control": "no-cache" },
       });
       if (!res.ok) {
         setErroMsg(`Erro ao verificar (${res.status}). Tente recarregar a página.`);
