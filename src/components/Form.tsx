@@ -23,6 +23,7 @@ export default function Form() {
   const [erro, setErro] = useState("");
   const [slug, setSlug] = useState<string | null>(null);
   const [copiado, setCopiado] = useState(false);
+  const [confirmNova, setConfirmNova] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Restaura link criado anteriormente (caso o usuário recarregue a página).
@@ -156,6 +157,46 @@ export default function Form() {
           Você vai ser redirecionado para o pagamento seguro. Depois é só
           mandar o link pro seu pai. 💛
         </p>
+
+        {confirmNova ? (
+          <div className="nova-confirm">
+            <p>Tem certeza? O link atual ficará salvo, mas você vai criar uma homenagem nova do zero.</p>
+            <div className="nova-confirm-btns">
+              <button
+                type="button"
+                className="nova-confirm-sim"
+                onClick={() => {
+                  try { localStorage.removeItem("ultimo_presente"); } catch {}
+                  setSlug(null);
+                  setConfirmNova(false);
+                  setNomePai("");
+                  setMensagem("");
+                  setNomeRemetente("");
+                  setEmail("");
+                  setYoutube("");
+                  setFotos([]);
+                }}
+              >
+                Sim, criar nova homenagem
+              </button>
+              <button
+                type="button"
+                className="nova-confirm-nao"
+                onClick={() => setConfirmNova(false)}
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button
+            type="button"
+            className="nova-btn"
+            onClick={() => setConfirmNova(true)}
+          >
+            + Criar outra homenagem
+          </button>
+        )}
       </div>
     );
   }

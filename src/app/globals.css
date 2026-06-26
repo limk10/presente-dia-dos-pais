@@ -588,6 +588,70 @@ nav.scrolled {
   opacity: 0.88;
 }
 
+/* ── NOVA HOMENAGEM ──────────────────────────────────────────── */
+.nova-btn {
+  margin-top: 24px;
+  width: 100%;
+  background: transparent;
+  border: 1px solid rgba(245, 236, 215, 0.15);
+  color: var(--muted);
+  padding: 14px;
+  border-radius: 4px;
+  font-size: 13px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: border-color var(--t) var(--ease), color var(--t) var(--ease);
+}
+.nova-btn:hover {
+  border-color: rgba(245, 236, 215, 0.35);
+  color: var(--text);
+}
+.nova-confirm {
+  margin-top: 24px;
+  padding: 20px 24px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(232, 168, 56, 0.2);
+  border-radius: 6px;
+  text-align: center;
+}
+.nova-confirm p {
+  font-size: 14px;
+  color: var(--muted);
+  margin: 0 0 16px;
+}
+.nova-confirm-btns {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+.nova-confirm-sim {
+  background: var(--accent);
+  color: var(--text);
+  border: none;
+  padding: 11px 20px;
+  border-radius: 4px;
+  font-size: 12px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: opacity var(--t) var(--ease);
+}
+.nova-confirm-sim:hover { opacity: 0.85; }
+.nova-confirm-nao {
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid rgba(245, 236, 215, 0.15);
+  padding: 11px 20px;
+  border-radius: 4px;
+  font-size: 12px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: color var(--t) var(--ease);
+}
+.nova-confirm-nao:hover { color: var(--text); }
+
 /* ── PROVA SOCIAL ────────────────────────────────────────────── */
 #prova {
   text-align: center;
