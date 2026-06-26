@@ -588,6 +588,23 @@ nav.scrolled {
   opacity: 0.88;
 }
 
+/* ── DONE OVERLAY (foco no pagamento) ───────────────────────── */
+.done-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  overflow-y: auto;
+}
+.done-overlay .done-card {
+  max-width: 520px;
+  width: 100%;
+}
+
 /* ── NOVA HOMENAGEM ──────────────────────────────────────────── */
 .nova-btn {
   margin-top: 24px;

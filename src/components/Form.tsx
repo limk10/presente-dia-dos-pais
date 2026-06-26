@@ -115,6 +115,7 @@ export default function Form() {
     )}${email.trim() ? `&email=${encodeURIComponent(email.trim())}` : ""}`;
 
     return (
+      <div className="done-overlay">
       <div className="done-card reveal visible">
         <div className="eyebrow" style={{ marginBottom: 16 }}>
           Quase lá
@@ -197,6 +198,7 @@ export default function Form() {
             + Criar outra homenagem
           </button>
         )}
+      </div>
       </div>
     );
   }
