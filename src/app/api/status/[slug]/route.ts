@@ -15,8 +15,13 @@ export async function GET(
     .eq("slug", params.slug)
     .maybeSingle<{ status: string }>();
 
+  const headers = {
+    "Cache-Control": "no-store, no-cache, must-revalidate",
+    Pragma: "no-cache",
+  };
+
   if (!data) {
-    return NextResponse.json({ status: "nao_encontrado" }, { status: 404 });
+    return NextResponse.json({ status: "nao_encontrado" }, { status: 404, headers });
   }
-  return NextResponse.json({ status: data.status });
+  return NextResponse.json({ status: data.status }, { headers });
 }

@@ -7,27 +7,56 @@ const CAKTO_URL =
   "https://pay.cakto.com.br/cbwju7a_944001";
 const PRECO = process.env.NEXT_PUBLIC_PRECO || "29";
 
-/**
- * Exibida quando o presente existe mas ainda está 'pendente'.
- * Faz polling do status; quando vira 'ativo', recarrega para mostrar o presente.
- */
 export default function WaitingView({ slug }: { slug: string }) {
   const [tentou, setTentou] = useState(false);
+  const [verificando, setVerificando] = useState(false);
 
   useEffect(() => {
-    const id = setInterval(async () => {
+    let cancelado = false;
+
+    async function verificar() {
       try {
-        const res = await fetch(`/api/status/${slug}`, { cache: "no-store" });
+        const res = await fetch(`/api/status/${slug}`, {
+          cache: "no-store",
+          headers: { "Cache-Control": "no-cache" },
+        });
+        if (!res.ok) return;
         const json = await res.json();
-        if (json.status === "ativo") {
-          clearInterval(id);
-          window.location.reload();
+        if (!cancelado && json.status === "ativo") {
+          // Força navegação limpa, sem cache do browser
+          window.location.href = window.location.pathname;
         }
       } catch {}
-      setTentou(true);
-    }, 4000);
-    return () => clearInterval(id);
+      if (!cancelado) setTentou(true);
+    }
+
+    // Primeira verificação em 2s, depois a cada 2s
+    const id = setInterval(verificar, 2000);
+    const primeiro = setTimeout(verificar, 1000);
+
+    return () => {
+      cancelado = true;
+      clearInterval(id);
+      clearTimeout(primeiro);
+    };
   }, [slug]);
+
+  async function verificarManual() {
+    setVerificando(true);
+    try {
+      const res = await fetch(`/api/status/${slug}`, {
+        cache: "no-store",
+        headers: { "Cache-Control": "no-cache" },
+      });
+      const json = await res.json();
+      if (json.status === "ativo") {
+        window.location.href = window.location.pathname;
+        return;
+      }
+    } catch {}
+    setVerificando(false);
+    alert("Pagamento ainda não confirmado. Aguarde alguns instantes.");
+  }
 
   const pagar = `${CAKTO_URL}?src=${encodeURIComponent(slug)}`;
 
@@ -40,13 +69,24 @@ export default function WaitingView({ slug }: { slug: string }) {
         Assim que o pagamento for confirmado, esta página abre o presente
         automaticamente. Pode deixar aberta — ela atualiza sozinha.
       </p>
-      <a className="pay-btn" style={{ maxWidth: 360 }} href={pagar} target="_blank" rel="noopener noreferrer">
+      <a
+        className="pay-btn"
+        style={{ maxWidth: 360 }}
+        href={pagar}
+        target="_blank"
+        rel="noopener noreferrer"
+      >
         Liberar o presente — R$ {PRECO}
       </a>
       {tentou && (
-        <p style={{ marginTop: 20, fontSize: 13 }}>
-          Já pagou? A confirmação pode levar até 1 minuto.
-        </p>
+        <button
+          type="button"
+          className="verificar-btn"
+          onClick={verificarManual}
+          disabled={verificando}
+        >
+          {verificando ? "Verificando…" : "Já paguei → verificar agora"}
+        </button>
       )}
     </div>
   );

@@ -1169,6 +1169,27 @@ footer .copy {
   }
 }
 
+.verificar-btn {
+  margin-top: 20px;
+  background: transparent;
+  border: 1px solid rgba(245, 236, 215, 0.2);
+  color: var(--muted);
+  padding: 12px 24px;
+  border-radius: 4px;
+  font-size: 13px;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: border-color var(--t) var(--ease), color var(--t) var(--ease);
+}
+.verificar-btn:hover:not(:disabled) {
+  border-color: rgba(245, 236, 215, 0.45);
+  color: var(--text);
+}
+.verificar-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 /* ── RESPONSIVO ──────────────────────────────────────────────── */
 @media (max-width: 900px) {
   section {
