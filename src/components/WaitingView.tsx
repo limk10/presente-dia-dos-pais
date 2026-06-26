@@ -52,7 +52,7 @@ export default function WaitingView({ slug }: { slug: string }) {
     }
 
     checarStatus();
-    intervalRef.current = setInterval(checarStatus, 2000);
+    intervalRef.current = setInterval(checarStatus, 5000);
     return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
   }, [slug]);
 
