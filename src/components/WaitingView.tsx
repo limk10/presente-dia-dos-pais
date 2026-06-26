@@ -40,7 +40,7 @@ export default function WaitingView({ slug }: { slug: string }) {
         Assim que o pagamento for confirmado, esta página abre o presente
         automaticamente. Pode deixar aberta — ela atualiza sozinha.
       </p>
-      <a className="pay-btn" style={{ maxWidth: 360 }} href={pagar}>
+      <a className="pay-btn" style={{ maxWidth: 360 }} href={pagar} target="_blank" rel="noopener noreferrer">
         Liberar o presente — R$ {PRECO}
       </a>
       {tentou && (
