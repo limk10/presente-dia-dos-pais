@@ -41,7 +41,7 @@ export default function WaitingView({ slug }: { slug: string }) {
         automaticamente. Pode deixar aberta — ela atualiza sozinha.
       </p>
       <a className="pay-btn" style={{ maxWidth: 360 }} href={pagar}>
-        Ainda não paguei — liberar por R$ {PRECO}
+        Liberar o presente — R$ {PRECO}
       </a>
       {tentou && (
         <p style={{ marginTop: 20, fontSize: 13 }}>
