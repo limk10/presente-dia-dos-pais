@@ -1,15 +1,24 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 const CAKTO_URL =
   process.env.NEXT_PUBLIC_CAKTO_CHECKOUT_URL ||
   "https://pay.cakto.com.br/cbwju7a_944001";
 const PRECO = process.env.NEXT_PUBLIC_PRECO || "29";
 
+function abrirPresente(slug: string) {
+  // Invalida o cache do router do Next.js e força GET limpo via timestamp
+  // Isso garante que a CDN da Vercel não sirva o HTML cacheado do WaitingView
+  window.location.replace(`/${slug}?_=${Date.now()}`);
+}
+
 export default function WaitingView({ slug }: { slug: string }) {
+  const router = useRouter();
   const [tentou, setTentou] = useState(false);
   const [verificando, setVerificando] = useState(false);
+  const [erroMsg, setErroMsg] = useState("");
 
   useEffect(() => {
     let cancelado = false;
@@ -23,39 +32,48 @@ export default function WaitingView({ slug }: { slug: string }) {
         if (!res.ok) return;
         const json = await res.json();
         if (!cancelado && json.status === "ativo") {
-          // Força navegação limpa, sem cache do browser
-          window.location.href = window.location.pathname;
+          // 1) invalida cache do router do Next.js
+          router.refresh();
+          // 2) depois navega com timestamp para driblar CDN
+          setTimeout(() => abrirPresente(slug), 100);
         }
       } catch {}
       if (!cancelado) setTentou(true);
     }
 
-    // Primeira verificação em 2s, depois a cada 2s
+    // Checa imediatamente, depois a cada 2s
+    verificar();
     const id = setInterval(verificar, 2000);
-    const primeiro = setTimeout(verificar, 1000);
-
     return () => {
       cancelado = true;
       clearInterval(id);
-      clearTimeout(primeiro);
     };
-  }, [slug]);
+  }, [slug, router]);
 
   async function verificarManual() {
     setVerificando(true);
+    setErroMsg("");
     try {
       const res = await fetch(`/api/status/${slug}`, {
         cache: "no-store",
         headers: { "Cache-Control": "no-cache" },
       });
-      const json = await res.json();
-      if (json.status === "ativo") {
-        window.location.href = window.location.pathname;
+      if (!res.ok) {
+        setErroMsg(`Erro ao verificar (${res.status}). Tente recarregar a página.`);
+        setVerificando(false);
         return;
       }
-    } catch {}
+      const json = await res.json();
+      if (json.status === "ativo") {
+        router.refresh();
+        setTimeout(() => abrirPresente(slug), 100);
+        return;
+      }
+      setErroMsg("Pagamento ainda não confirmado. Aguarde alguns instantes.");
+    } catch (err) {
+      setErroMsg("Não foi possível verificar. Tente recarregar a página manualmente.");
+    }
     setVerificando(false);
-    alert("Pagamento ainda não confirmado. Aguarde alguns instantes.");
   }
 
   const pagar = `${CAKTO_URL}?src=${encodeURIComponent(slug)}`;
@@ -87,6 +105,9 @@ export default function WaitingView({ slug }: { slug: string }) {
         >
           {verificando ? "Verificando…" : "Já paguei → verificar agora"}
         </button>
+      )}
+      {erroMsg && (
+        <p style={{ marginTop: 12, fontSize: 13, color: "#ff9b73" }}>{erroMsg}</p>
       )}
     </div>
   );
