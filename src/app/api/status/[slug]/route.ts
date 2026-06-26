@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { supabaseAdmin } from "@/lib/supabase";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -8,20 +7,38 @@ export async function GET(
   _req: Request,
   { params }: { params: { slug: string } },
 ) {
-  const supa = supabaseAdmin();
-  const { data } = await supa
-    .from("presentes")
-    .select("status")
-    .eq("slug", params.slug)
-    .maybeSingle<{ status: string }>();
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
-  const headers = {
+  // Usa fetch direto ao PostgREST — evita qualquer bug do cliente JS
+  // com o formato sb_secret_* que não é um JWT bearer padrão
+  const url = `${supabaseUrl}/rest/v1/presentes?slug=eq.${encodeURIComponent(params.slug)}&select=status&limit=1`;
+
+  const res = await fetch(url, {
+    headers: {
+      apikey: serviceKey,
+      Authorization: `Bearer ${serviceKey}`,
+      Accept: "application/json",
+      "Cache-Control": "no-cache",
+    },
+    cache: "no-store",
+  });
+
+  const cacheHeaders = {
     "Cache-Control": "no-store, no-cache, must-revalidate",
     Pragma: "no-cache",
   };
 
-  if (!data) {
-    return NextResponse.json({ status: "nao_encontrado" }, { status: 404, headers });
+  if (!res.ok) {
+    return NextResponse.json({ status: "erro", _http: res.status }, { status: 500, headers: cacheHeaders });
   }
-  return NextResponse.json({ status: data.status }, { headers });
+
+  const rows = await res.json();
+  const row = Array.isArray(rows) && rows.length > 0 ? rows[0] : null;
+
+  if (!row) {
+    return NextResponse.json({ status: "nao_encontrado", _slug: params.slug }, { status: 404, headers: cacheHeaders });
+  }
+
+  return NextResponse.json({ status: row.status }, { headers: cacheHeaders });
 }
