@@ -26,8 +26,8 @@ export async function POST(req: NextRequest) {
     : "Não coloque assinatura.";
 
   const prompt = `Escreva uma mensagem emocionante e sincera de Dia dos Pais para "${nomePai}".
-A mensagem deve ter entre 3 e 5 parágrafos curtos, usar um tom caloroso e pessoal, falar sobre gratidão, momentos juntos e o quanto o pai é especial.
-Escreva em português brasileiro. Não use clichês vazios.
+A mensagem deve ter no máximo 900 caracteres, usar tom caloroso e pessoal, falar sobre gratidão, momentos juntos e o quanto o pai é especial.
+Escreva em português brasileiro. Não use clichês vazios. Seja direto e genuíno.
 ${assinatura}
 Retorne apenas o texto da mensagem, sem aspas, sem título, sem introdução.`;
 
@@ -42,7 +42,7 @@ Retorne apenas o texto da mensagem, sem aspas, sem título, sem introdução.`;
         model: "deepseek-chat",
         messages: [{ role: "user", content: prompt }],
         temperature: 0.9,
-        max_tokens: 400,
+        max_tokens: 350,
       }),
     });
 
@@ -55,9 +55,10 @@ Retorne apenas o texto da mensagem, sem aspas, sem título, sem introdução.`;
     }
 
     const json = await res.json();
-    const mensagem = json.choices?.[0]?.message?.content?.trim();
+    const raw = json.choices?.[0]?.message?.content?.trim() ?? "";
+    const mensagem = raw.length > 1200 ? raw.slice(0, 1197) + "…" : raw;
 
-    if (!mensagem) {
+    if (!mensagem || mensagem.length === 0) {
       return NextResponse.json(
         { error: "Resposta vazia da IA. Tente novamente." },
         { status: 502 },
