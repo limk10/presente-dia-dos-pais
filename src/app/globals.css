@@ -828,6 +828,10 @@ footer .copy {
   background: radial-gradient(ellipse at 50% 40%, #4d2a14 0%, #2a1508 70%);
   transition: opacity 800ms ease;
 }
+.gift-intro > * {
+  max-width: 780px;
+  width: 100%;
+}
 .gift-intro.hide {
   opacity: 0;
   pointer-events: none;
@@ -844,8 +848,8 @@ footer .copy {
 .gift-intro h1 {
   font-family: var(--font-cormorant), Georgia, serif;
   font-weight: 300;
-  font-size: clamp(44px, 9vw, 92px);
-  line-height: 1.05;
+  font-size: clamp(36px, 6vw, 72px);
+  line-height: 1.1;
   margin-bottom: 40px;
   opacity: 0;
   animation: fadeUp 1s ease 0.45s forwards;
