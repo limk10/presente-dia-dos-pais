@@ -197,9 +197,13 @@ export default function Form() {
                 type="button"
                 className="nova-confirm-sim"
                 onClick={() => {
-                  try { localStorage.removeItem("ultimo_presente"); } catch {}
+                  try {
+                    localStorage.removeItem("ultimo_presente");
+                    localStorage.removeItem("ia_tentativas");
+                  } catch {}
                   setSlug(null);
                   setConfirmNova(false);
+                  setTentativasIA(0);
                   setNomePai("");
                   setMensagem("");
                   setNomeRemetente("");
