@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin, BUCKET_FOTOS } from "@/lib/supabase";
-import { gerarSlug } from "@/lib/slug";
+import { gerarSlug, gerarSlugNomes } from "@/lib/slug";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -64,11 +64,12 @@ export async function POST(req: NextRequest) {
 
   const supa = supabaseAdmin();
 
-  // Gera slug único (tenta algumas vezes em caso de colisão).
+  // Gera slug único: 1ª tentativa usa nomes legíveis, colisões adicionam sufixo aleatório.
   let slug = "";
   let presenteId = "";
+  const baseSlug = gerarSlugNomes(nome_pai, nome_remetente);
   for (let attempt = 0; attempt < 6; attempt++) {
-    slug = gerarSlug(7);
+    slug = attempt === 0 ? baseSlug : `${baseSlug}-${gerarSlug(3)}`;
     const { data, error } = await supa
       .from("presentes")
       .insert({

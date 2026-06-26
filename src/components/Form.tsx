@@ -25,6 +25,17 @@ export default function Form() {
   const [copiado, setCopiado] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // Restaura link criado anteriormente (caso o usuário recarregue a página).
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("ultimo_presente");
+      if (saved) {
+        const { slug: s, email: e } = JSON.parse(saved);
+        if (s) { setSlug(s); setEmail(e || ""); }
+      }
+    } catch {}
+  }, []);
+
   // Limpa as object URLs ao desmontar para não vazar memória.
   useEffect(() => {
     return () => fotos.forEach((f) => URL.revokeObjectURL(f.url));
@@ -76,9 +87,11 @@ export default function Form() {
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || "Erro ao criar o presente.");
       setSlug(json.slug);
-      // Guarda para a página de espera saber qual presente acompanhar.
       try {
-        localStorage.setItem("ultimo_presente", json.slug);
+        localStorage.setItem(
+          "ultimo_presente",
+          JSON.stringify({ slug: json.slug, email: email.trim() }),
+        );
       } catch {}
     } catch (err) {
       setErro(
@@ -122,8 +135,21 @@ export default function Form() {
           >
             {copiado ? "Copiado!" : "Copiar"}
           </button>
+          <a
+            className="link-open-btn"
+            href={link}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Abrir ↗
+          </a>
         </div>
-        <a className="pay-btn" href={pagar}>
+        <a
+          className="pay-btn"
+          href={pagar}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
           Liberar o presente — R$ {PRECO}
         </a>
         <p style={{ marginTop: 18, fontSize: 13 }}>

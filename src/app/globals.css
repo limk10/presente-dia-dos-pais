@@ -554,7 +554,8 @@ nav.scrolled {
   font-size: 14px;
   font-family: inherit;
 }
-.link-box button {
+.link-box button,
+.link-open-btn {
   background: var(--bg-3);
   border: 1px solid rgba(232, 168, 56, 0.3);
   color: var(--text);
@@ -564,6 +565,10 @@ nav.scrolled {
   font-size: 12px;
   letter-spacing: 1px;
   text-transform: uppercase;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
 }
 .pay-btn {
   display: inline-block;
