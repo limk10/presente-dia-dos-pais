@@ -24,9 +24,13 @@ export default function Form() {
   const [slug, setSlug] = useState<string | null>(null);
   const [copiado, setCopiado] = useState(false);
   const [confirmNova, setConfirmNova] = useState(false);
+  const [gerandoIA, setGerandoIA] = useState(false);
+  const [tentativasIA, setTentativasIA] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Restaura link criado anteriormente (caso o usuário recarregue a página).
+  const MAX_TENTATIVAS_IA = 3;
+
+  // Restaura link e tentativas de IA do localStorage.
   useEffect(() => {
     try {
       const saved = localStorage.getItem("ultimo_presente");
@@ -34,6 +38,8 @@ export default function Form() {
         const { slug: s, email: e } = JSON.parse(saved);
         if (s) { setSlug(s); setEmail(e || ""); }
       }
+      const t = parseInt(localStorage.getItem("ia_tentativas") || "0", 10);
+      if (!isNaN(t)) setTentativasIA(t);
     } catch {}
   }, []);
 
@@ -44,6 +50,31 @@ export default function Form() {
   }, []);
 
   const ytId = youtubeId(youtube);
+
+  async function gerarMensagemIA() {
+    if (tentativasIA >= MAX_TENTATIVAS_IA || gerandoIA) return;
+    setGerandoIA(true);
+    try {
+      const res = await fetch("/api/gerar-mensagem", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nome_pai: nomePai.trim() || undefined,
+          nome_remetente: nomeRemetente.trim() || undefined,
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error);
+      setMensagem(json.mensagem);
+      const novas = tentativasIA + 1;
+      setTentativasIA(novas);
+      try { localStorage.setItem("ia_tentativas", String(novas)); } catch {}
+    } catch (err) {
+      setErro(err instanceof Error ? err.message : "Erro ao gerar mensagem.");
+    } finally {
+      setGerandoIA(false);
+    }
+  }
 
   function addFiles(list: FileList | null) {
     if (!list) return;
@@ -231,6 +262,23 @@ export default function Form() {
             placeholder="Pai, obrigado por cada…"
             maxLength={1200}
           />
+          {tentativasIA < MAX_TENTATIVAS_IA ? (
+            <button
+              type="button"
+              className="ia-btn"
+              onClick={gerarMensagemIA}
+              disabled={gerandoIA}
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/>
+              </svg>
+              {gerandoIA
+                ? "Gerando…"
+                : `Gerar com IA (${MAX_TENTATIVAS_IA - tentativasIA} restante${MAX_TENTATIVAS_IA - tentativasIA === 1 ? "" : "s"})`}
+            </button>
+          ) : (
+            <p className="ia-esgotado">Você usou todas as {MAX_TENTATIVAS_IA} gerações com IA.</p>
+          )}
         </div>
 
         <div className="form-field">
