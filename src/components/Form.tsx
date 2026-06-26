@@ -262,6 +262,11 @@ export default function Form() {
             placeholder="Pai, obrigado por cada…"
             maxLength={1200}
           />
+          <p className="ia-hint">
+            {tentativasIA < MAX_TENTATIVAS_IA
+              ? <>Não sabe o que escrever? Deixa a IA criar pra você — <span>{tentativasIA}/{MAX_TENTATIVAS_IA} tentativas usadas</span></>
+              : <>Você usou todas as {MAX_TENTATIVAS_IA} gerações disponíveis.</>}
+          </p>
           {tentativasIA < MAX_TENTATIVAS_IA ? (
             <button
               type="button"
@@ -274,9 +279,7 @@ export default function Form() {
               </svg>
               {gerandoIA ? "Gerando…" : "Gerar mensagem automaticamente"}
             </button>
-          ) : (
-            <p className="ia-esgotado">Você usou todas as {MAX_TENTATIVAS_IA} gerações com IA.</p>
-          )}
+          ) : null}
         </div>
 
         <div className="form-field">

@@ -493,6 +493,18 @@ nav.scrolled {
   margin-top: 14px;
 }
 
+/* ── HINT + BOTÃO IA ─────────────────────────────────────────── */
+.ia-hint {
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--muted);
+  opacity: 0.75;
+}
+.ia-hint span {
+  color: var(--gold);
+  opacity: 0.7;
+}
+
 /* ── BOTÃO IA ────────────────────────────────────────────────── */
 .ia-btn {
   margin-top: 10px;
