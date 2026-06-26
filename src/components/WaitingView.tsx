@@ -1,76 +1,99 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { apiClient } from "@/lib/apiClient";
+import GiftView from "@/components/GiftView";
 
 const CAKTO_URL =
   process.env.NEXT_PUBLIC_CAKTO_CHECKOUT_URL ||
   "https://pay.cakto.com.br/cbwju7a_944001";
 const PRECO = process.env.NEXT_PUBLIC_PRECO || "29";
 
-function abrirPresente(slug: string) {
-  // Invalida o cache do router do Next.js e força GET limpo via timestamp
-  // Isso garante que a CDN da Vercel não sirva o HTML cacheado do WaitingView
-  window.location.replace(`/${slug}?_=${Date.now()}`);
-}
+type GiftData = {
+  nomePai: string;
+  mensagem: string;
+  nomeRemetente: string | null;
+  youtubeId: string | null;
+  fotos: string[];
+  link: string;
+};
 
 export default function WaitingView({ slug }: { slug: string }) {
-  const router = useRouter();
+  const [isAtivo, setIsAtivo] = useState(false);
   const [tentou, setTentou] = useState(false);
-  const [verificando, setVerificando] = useState(false);
   const [erroMsg, setErroMsg] = useState("");
+  const [verificando, setVerificando] = useState(false);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  // ── Polling manual — propositalmente fora do React Query ──────────────────
+  // O status deve ser sempre fresh: nunca cachear nem de-duplicar.
   useEffect(() => {
-    let cancelado = false;
-
-    async function verificar() {
+    async function checarStatus() {
       try {
-        // Timestamp garante URL única em cada poll — sem cache de CDN
-        const res = await fetch(`/api/status/${slug}?_=${Date.now()}`, {
-          cache: "no-store",
-        });
-        if (!res.ok) return;
-        const json = await res.json();
-        if (!cancelado && json.status === "ativo") {
-          // 1) invalida cache do router do Next.js
-          router.refresh();
-          // 2) depois navega com timestamp para driblar CDN
-          setTimeout(() => abrirPresente(slug), 100);
+        // Timestamp na URL garante cache miss na CDN a cada poll
+        const { data } = await apiClient.get<{ status: string }>(
+          `/api/status/${slug}?_=${Date.now()}`,
+        );
+        if (data.status === "ativo") {
+          if (intervalRef.current) clearInterval(intervalRef.current);
+          setIsAtivo(true);
         }
-      } catch {}
-      if (!cancelado) setTentou(true);
+      } catch {
+        // Erros transientes (rede, timeout) são ignorados — o próximo ciclo retenta
+      }
+      setTentou(true);
     }
 
-    // Checa imediatamente, depois a cada 2s
-    verificar();
-    const id = setInterval(verificar, 2000);
-    return () => {
-      cancelado = true;
-      clearInterval(id);
-    };
-  }, [slug, router]);
+    checarStatus();
+    intervalRef.current = setInterval(checarStatus, 2000);
+    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
+  }, [slug]);
 
+  // ── React Query: busca dados completos UMA VEZ quando ativo ──────────────
+  // staleTime: Infinity → nunca re-busca enquanto a aba estiver aberta.
+  // Evita chamadas repetidas ao banco para um presente que não vai mudar.
+  const { data: giftData } = useQuery<GiftData>({
+    queryKey: ["presente", slug],
+    queryFn: () =>
+      apiClient.get<GiftData>(`/api/presente/${slug}`).then((r) => r.data),
+    enabled: isAtivo,
+    staleTime: Infinity,
+    gcTime: 60 * 60 * 1000, // mantém em cache por 1h
+  });
+
+  // Transição suave: assim que os dados chegam, renderiza GiftView inline
+  // sem nenhum page reload — elimina o loop infinito de redirecionamento.
+  if (isAtivo && giftData) {
+    return <GiftView {...giftData} />;
+  }
+
+  // Estado intermediário: detectou ativo mas dados ainda carregando
+  if (isAtivo) {
+    return (
+      <div className="waiting">
+        <div className="spinner" />
+        <p className="small">Abrindo o presente…</p>
+      </div>
+    );
+  }
+
+  // ── Verificação manual ────────────────────────────────────────────────────
   async function verificarManual() {
     setVerificando(true);
     setErroMsg("");
     try {
-      const res = await fetch(`/api/status/${slug}?_=${Date.now()}`, {
-        cache: "no-store",
-      });
-      if (!res.ok) {
-        setErroMsg(`Erro ao verificar (${res.status}). Tente recarregar a página.`);
-        setVerificando(false);
-        return;
-      }
-      const json = await res.json();
-      if (json.status === "ativo") {
-        router.refresh();
-        setTimeout(() => abrirPresente(slug), 100);
+      const { data } = await apiClient.get<{ status: string }>(
+        `/api/status/${slug}?_=${Date.now()}`,
+      );
+      if (data.status === "ativo") {
+        if (intervalRef.current) clearInterval(intervalRef.current);
+        setIsAtivo(true);
         return;
       }
       setErroMsg("Pagamento ainda não confirmado. Aguarde alguns instantes.");
-    } catch (err) {
-      setErroMsg("Não foi possível verificar. Tente recarregar a página manualmente.");
+    } catch {
+      setErroMsg("Não foi possível verificar. Tente novamente.");
     }
     setVerificando(false);
   }
@@ -106,7 +129,9 @@ export default function WaitingView({ slug }: { slug: string }) {
         </button>
       )}
       {erroMsg && (
-        <p style={{ marginTop: 12, fontSize: 13, color: "#ff9b73" }}>{erroMsg}</p>
+        <p style={{ marginTop: 12, fontSize: 13, color: "#ff9b73" }}>
+          {erroMsg}
+        </p>
       )}
     </div>
   );

@@ -1,11 +1,11 @@
 import { notFound } from "next/navigation";
 import { headers } from "next/headers";
-import { supabaseAdmin, type Presente, type Foto } from "@/lib/supabase";
+import { getPresente, getFotos } from "@/lib/db";
 import { youtubeId } from "@/lib/youtube";
 import GiftView from "@/components/GiftView";
 import WaitingView from "@/components/WaitingView";
 
-// Sempre busca dados frescos (status muda via webhook).
+// Sempre busca dados frescos — status muda via webhook assíncrono.
 export const dynamic = "force-dynamic";
 
 function baseUrl(): string {
@@ -21,13 +21,7 @@ export default async function PresentePage({
 }: {
   params: { slug: string };
 }) {
-  const supa = supabaseAdmin();
-
-  const { data: presente } = await supa
-    .from("presentes")
-    .select("*")
-    .eq("slug", params.slug)
-    .maybeSingle<Presente>();
+  const presente = await getPresente(params.slug).catch(() => null);
 
   if (!presente) notFound();
 
@@ -35,13 +29,7 @@ export default async function PresentePage({
     return <WaitingView slug={presente.slug} />;
   }
 
-  const { data: fotos } = await supa
-    .from("fotos")
-    .select("*")
-    .eq("presente_id", presente.id)
-    .order("ordem", { ascending: true })
-    .returns<Foto[]>();
-
+  const fotos = await getFotos(presente.id).catch(() => [] as Awaited<ReturnType<typeof getFotos>>);
   const link = `${baseUrl()}/${presente.slug}`;
 
   return (
@@ -50,7 +38,7 @@ export default async function PresentePage({
       mensagem={presente.mensagem}
       nomeRemetente={presente.nome_remetente}
       youtubeId={youtubeId(presente.youtube_url)}
-      fotos={(fotos ?? []).map((f) => f.url)}
+      fotos={fotos.map((f) => f.url)}
       link={link}
     />
   );

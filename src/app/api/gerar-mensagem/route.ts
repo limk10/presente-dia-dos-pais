@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
+import axios from "axios";
 
 export const runtime = "nodejs";
+
+const deepseek = axios.create({
+  baseURL: "https://api.deepseek.com",
+  timeout: 20_000,
+});
 
 export async function POST(req: NextRequest) {
   const apiKey = process.env.DEEPSEEK_API_KEY;
@@ -20,7 +26,6 @@ export async function POST(req: NextRequest) {
 
   const nomePai = String(body.nome_pai || "").trim() || "meu pai";
   const nomeRemetente = String(body.nome_remetente || "").trim();
-
   const assinatura = nomeRemetente
     ? `Assine a mensagem com o nome "${nomeRemetente}".`
     : "Não coloque assinatura.";
@@ -32,33 +37,21 @@ ${assinatura}
 Retorne apenas o texto da mensagem, sem aspas, sem título, sem introdução.`;
 
   try {
-    const res = await fetch("https://api.deepseek.com/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
+    const { data } = await deepseek.post(
+      "/chat/completions",
+      {
         model: "deepseek-chat",
         messages: [{ role: "user", content: prompt }],
         temperature: 0.9,
         max_tokens: 180,
-      }),
-    });
+      },
+      { headers: { Authorization: `Bearer ${apiKey}` } },
+    );
 
-    if (!res.ok) {
-      console.error("[gerar-mensagem] DeepSeek error:", res.status, await res.text());
-      return NextResponse.json(
-        { error: "Não foi possível gerar a mensagem. Tente novamente." },
-        { status: 502 },
-      );
-    }
-
-    const json = await res.json();
-    const raw = json.choices?.[0]?.message?.content?.trim() ?? "";
+    const raw: string = data.choices?.[0]?.message?.content?.trim() ?? "";
     const mensagem = raw.length > 500 ? raw.slice(0, 497) + "…" : raw;
 
-    if (!mensagem || mensagem.length === 0) {
+    if (!mensagem) {
       return NextResponse.json(
         { error: "Resposta vazia da IA. Tente novamente." },
         { status: 502 },
@@ -67,9 +60,9 @@ Retorne apenas o texto da mensagem, sem aspas, sem título, sem introdução.`;
 
     return NextResponse.json({ mensagem });
   } catch (err) {
-    console.error("[gerar-mensagem] fetch error:", err);
+    console.error("[gerar-mensagem] erro:", err);
     return NextResponse.json(
-      { error: "Erro de conexão com a IA. Tente novamente." },
+      { error: "Não foi possível gerar a mensagem. Tente novamente." },
       { status: 502 },
     );
   }

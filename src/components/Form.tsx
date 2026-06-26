@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Preview from "./Preview";
 import { youtubeId } from "@/lib/youtube";
+import { apiClient } from "@/lib/apiClient";
 
 const MAX_FOTOS = 10;
 const CAKTO_URL =
@@ -55,17 +56,14 @@ export default function Form() {
     if (tentativasIA >= MAX_TENTATIVAS_IA || gerandoIA) return;
     setGerandoIA(true);
     try {
-      const res = await fetch("/api/gerar-mensagem", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      const { data } = await apiClient.post<{ mensagem: string }>(
+        "/api/gerar-mensagem",
+        {
           nome_pai: nomePai.trim() || undefined,
           nome_remetente: nomeRemetente.trim() || undefined,
-        }),
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error);
-      setMensagem(json.mensagem);
+        },
+      );
+      setMensagem(data.mensagem);
       const novas = tentativasIA + 1;
       setTentativasIA(novas);
       try { localStorage.setItem("ia_tentativas", String(novas)); } catch {}
@@ -115,14 +113,15 @@ export default function Form() {
       fd.append("youtube_url", youtube.trim());
       fotos.forEach((f) => fd.append("fotos", f.file));
 
-      const res = await fetch("/api/presentes", { method: "POST", body: fd });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error || "Erro ao criar o presente.");
-      setSlug(json.slug);
+      const { data } = await apiClient.post<{ slug: string }>(
+        "/api/presentes",
+        fd,
+      );
+      setSlug(data.slug);
       try {
         localStorage.setItem(
           "ultimo_presente",
-          JSON.stringify({ slug: json.slug, email: email.trim() }),
+          JSON.stringify({ slug: data.slug, email: email.trim() }),
         );
       } catch {}
     } catch (err) {

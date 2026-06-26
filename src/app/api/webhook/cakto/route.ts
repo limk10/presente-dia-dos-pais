@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabaseAdmin } from "@/lib/supabase";
+import {
+  updatePresenteStatus,
+  getPresentePorEmail,
+  ativarPresentePorId,
+} from "@/lib/db";
 
 export const runtime = "nodejs";
 
-// Eventos da Cakto que significam "pagamento confirmado".
 const EVENTOS_APROVADOS = new Set([
   "purchase_approved",
   "purchase_paid",
@@ -11,134 +14,114 @@ const EVENTOS_APROVADOS = new Set([
 ]);
 
 /**
- * Tenta encontrar o nosso slug no payload da Cakto.
- * Passamos o slug como ?src=<slug> no link do checkout; a Cakto costuma
- * devolver isso em algum campo de tracking. Procuramos em vários lugares
- * porque o nome exato pode variar. Ajuste aqui se necessário depois de
- * inspecionar um payload real (logado abaixo).
+ * Extrai o slug passado como ?src=<slug> no link do checkout.
+ * Regex corrigida para capturar slugs com hífens (ex: marcos-aurelio-de-matheus-lopes).
  */
-function extrairSlug(payload: any): string | null {
-  const d = payload?.data ?? payload ?? {};
+function extrairSlug(payload: unknown): string | null {
+  const d = (payload as Record<string, unknown>)?.data as Record<string, unknown> ?? payload as Record<string, unknown> ?? {};
   const candidatos = [
     d.src,
     d.tracking,
     d.utm_content,
     d.ref,
-    payload?.src,
-    d.offer?.src,
-    d.checkout?.src,
+    (payload as Record<string, unknown>)?.src,
+    (d.offer as Record<string, unknown>)?.src,
+    (d.checkout as Record<string, unknown>)?.src,
   ];
+  const slugPattern = /^[a-z0-9][a-z0-9-]{2,58}$/;
   for (const c of candidatos) {
-    if (typeof c === "string" && /^[a-z0-9]{5,12}$/.test(c.trim())) {
+    if (typeof c === "string" && slugPattern.test(c.trim())) {
       return c.trim();
     }
   }
-  // Procura ?src= dentro de qualquer URL presente no payload.
+  // Procura ?src= dentro de qualquer URL no payload
   const urls = [d.checkoutUrl, d.checkout_url, d.url].filter(
     (u): u is string => typeof u === "string",
   );
   for (const u of urls) {
-    const m = u.match(/[?&]src=([a-z0-9]{5,12})/i);
+    const m = u.match(/[?&]src=([a-z0-9][a-z0-9-]{2,58})/i);
     if (m) return m[1];
   }
   return null;
 }
 
-function extrairEmail(payload: any): string | null {
-  const d = payload?.data ?? {};
-  const email = d.customer?.email ?? d.buyer?.email ?? d.email;
+function extrairEmail(payload: unknown): string | null {
+  const d = ((payload as Record<string, unknown>)?.data ?? {}) as Record<string, unknown>;
+  const email =
+    (d.customer as Record<string, unknown>)?.email ??
+    (d.buyer as Record<string, unknown>)?.email ??
+    d.email;
   return typeof email === "string" ? email.trim().toLowerCase() : null;
 }
 
-async function ativarPorSlug(slug: string): Promise<boolean> {
-  const supa = supabaseAdmin();
-  const { data, error } = await supa
-    .from("presentes")
-    .update({ status: "ativo", activated_at: new Date().toISOString() })
-    .eq("slug", slug)
-    .eq("status", "pendente")
-    .select("id");
-  return !error && !!data && data.length > 0;
-}
-
-async function ativarPorEmail(email: string): Promise<boolean> {
-  const supa = supabaseAdmin();
-  // Ativa o presente pendente mais recente desse e-mail.
-  const { data } = await supa
-    .from("presentes")
-    .select("id")
-    .eq("status", "pendente")
-    .ilike("email_comprador", email)
-    .order("created_at", { ascending: false })
-    .limit(1);
-  if (!data || data.length === 0) return false;
-  const { error } = await supabaseAdmin()
-    .from("presentes")
-    .update({ status: "ativo", activated_at: new Date().toISOString() })
-    .eq("id", data[0].id);
-  return !error;
-}
-
 export async function POST(req: NextRequest) {
-  let payload: any;
+  let payload: unknown;
   try {
     payload = await req.json();
   } catch {
     return NextResponse.json({ error: "payload inválido" }, { status: 400 });
   }
 
-  // Log do payload cru — inspecione no Vercel (Functions > Logs) para
-  // confirmar a estrutura real e ajustar extrairSlug se preciso.
   console.log("[cakto webhook]", JSON.stringify(payload));
 
-  // Validação do secret (se configurado no ambiente).
   const secretEsperado = process.env.CAKTO_WEBHOOK_SECRET;
   if (secretEsperado) {
+    const p = payload as Record<string, unknown>;
     const secretRecebido =
-      payload?.secret ?? req.headers.get("x-cakto-secret") ?? "";
+      (p?.secret as string) ?? req.headers.get("x-cakto-secret") ?? "";
     if (secretRecebido !== secretEsperado) {
       console.warn("[cakto webhook] secret inválido");
       return NextResponse.json({ error: "não autorizado" }, { status: 401 });
     }
   }
 
-  const evento = payload?.event ?? payload?.type ?? "";
+  const p = payload as Record<string, unknown>;
+  const evento = (p?.event ?? p?.type ?? "") as string;
   if (!EVENTOS_APROVADOS.has(evento)) {
-    // Não é um pagamento aprovado — reconhece e ignora.
     return NextResponse.json({ ok: true, ignored: evento });
   }
 
-  // 1) tenta casar pelo slug (src); 2) fallback pelo e-mail.
   let ativado = false;
   let via = "";
 
   const slug = extrairSlug(payload);
   if (slug) {
-    ativado = await ativarPorSlug(slug);
-    if (ativado) via = "slug";
-  }
-  if (!ativado) {
-    const email = extrairEmail(payload);
-    if (email) {
-      ativado = await ativarPorEmail(email);
-      if (ativado) via = "email";
+    try {
+      ativado = await updatePresenteStatus(slug, "ativo", {
+        activated_at: new Date().toISOString(),
+      });
+      if (ativado) via = "slug";
+    } catch (err) {
+      console.error("[cakto webhook] erro ao ativar por slug:", err);
     }
   }
 
   if (!ativado) {
-    // Reconhece (200) para a Cakto não reenviar infinitamente, mas loga
-    // como aviso para ativação manual se necessário.
-    console.warn(
-      "[cakto webhook] pagamento aprovado mas presente não encontrado",
-      { slug, email: extrairEmail(payload) },
-    );
+    const email = extrairEmail(payload);
+    if (email) {
+      try {
+        const row = await getPresentePorEmail(email);
+        if (row) {
+          ativado = await ativarPresentePorId(row.id);
+          if (ativado) via = "email";
+        }
+      } catch (err) {
+        console.error("[cakto webhook] erro ao ativar por email:", err);
+      }
+    }
+  }
+
+  if (!ativado) {
+    console.warn("[cakto webhook] presente não encontrado", {
+      slug,
+      email: extrairEmail(payload),
+    });
     return NextResponse.json({ ok: true, matched: false });
   }
 
   return NextResponse.json({ ok: true, matched: true, via });
 }
 
-// Healthcheck simples (a Cakto às vezes faz GET ao validar a URL).
 export async function GET() {
   return NextResponse.json({ ok: true, endpoint: "cakto-webhook" });
 }
