@@ -37,6 +37,12 @@ export default function WaitingView({ slug }: { slug: string }) {
         );
         if (data.status === "ativo") {
           if (intervalRef.current) clearInterval(intervalRef.current);
+          // Limpa o localStorage para que ao voltar à rota /
+          // o formulário apareça limpo (não o done-card do presente pago)
+          try {
+            localStorage.removeItem("ultimo_presente");
+            localStorage.removeItem("ia_tentativas");
+          } catch {}
           setIsAtivo(true);
         }
       } catch {
@@ -88,6 +94,10 @@ export default function WaitingView({ slug }: { slug: string }) {
       );
       if (data.status === "ativo") {
         if (intervalRef.current) clearInterval(intervalRef.current);
+        try {
+          localStorage.removeItem("ultimo_presente");
+          localStorage.removeItem("ia_tentativas");
+        } catch {}
         setIsAtivo(true);
         return;
       }
