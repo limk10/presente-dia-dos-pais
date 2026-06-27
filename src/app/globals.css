@@ -391,6 +391,45 @@ nav.scrolled {
   color: rgba(168, 152, 128, 0.6);
 }
 
+/* aviso TikTok browser */
+.tiktok-warn {
+  border: 1px solid rgba(232, 168, 56, 0.45);
+  border-radius: 6px;
+  padding: 22px 20px;
+  background: rgba(232, 168, 56, 0.06);
+  text-align: center;
+}
+.tiktok-warn p {
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.5;
+  margin-bottom: 8px;
+}
+.tiktok-warn-title {
+  color: var(--gold) !important;
+  font-weight: 600;
+  font-size: 15px !important;
+  margin-bottom: 10px !important;
+}
+.tiktok-warn strong {
+  color: var(--text);
+}
+.tiktok-copy-btn {
+  margin-top: 14px;
+  background: transparent;
+  border: 1px solid var(--gold);
+  color: var(--gold);
+  border-radius: 6px;
+  padding: 10px 18px;
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: background var(--t) var(--ease);
+}
+.tiktok-copy-btn:hover {
+  background: rgba(232, 168, 56, 0.1);
+}
+
 /* upload */
 .dropzone {
   position: relative;

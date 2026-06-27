@@ -27,9 +27,16 @@ export default function Form() {
   const [confirmNova, setConfirmNova] = useState(false);
   const [gerandoIA, setGerandoIA] = useState(false);
   const [tentativasIA, setTentativasIA] = useState(0);
-
+  const [isTikTokBrowser, setIsTikTokBrowser] = useState(false);
+  const [linkCopiado, setLinkCopiado] = useState(false);
 
   const MAX_TENTATIVAS_IA = 3;
+
+  // Detecta o navegador interno do TikTok, que bloqueia input type=file.
+  useEffect(() => {
+    const ua = navigator.userAgent;
+    setIsTikTokBrowser(/BytedanceWebview|BytedancePclient|trill|musical_ly/i.test(ua));
+  }, []);
 
   // Restaura link e tentativas de IA do localStorage.
   useEffect(() => {
@@ -306,35 +313,53 @@ export default function Form() {
               {fotos.length}/{MAX_FOTOS}
             </span>
           </label>
-          <label
-            className="dropzone"
-            onDragOver={(e) => e.preventDefault()}
-            onDrop={(e) => {
-              e.preventDefault();
-              addFiles(e.dataTransfer.files);
-            }}
-          >
-            <p>
-              <strong>Clique para escolher</strong> ou arraste as fotos aqui
-            </p>
-            <input
-              type="file"
-              accept="image/*"
-              multiple
-              onChange={(e) => {
-                addFiles(e.target.files);
-                e.target.value = "";
+          {isTikTokBrowser ? (
+            <div className="tiktok-warn">
+              <p className="tiktok-warn-title">Upload não funciona no navegador do TikTok</p>
+              <p>Toque em <strong>···</strong> (canto superior direito) e selecione <strong>"Abrir no navegador"</strong> para continuar.</p>
+              <button
+                type="button"
+                className="tiktok-copy-btn"
+                onClick={() => {
+                  navigator.clipboard?.writeText(window.location.href).catch(() => {});
+                  setLinkCopiado(true);
+                  setTimeout(() => setLinkCopiado(false), 3000);
+                }}
+              >
+                {linkCopiado ? "Link copiado!" : "Ou copie o link e cole no navegador"}
+              </button>
+            </div>
+          ) : (
+            <label
+              className="dropzone"
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => {
+                e.preventDefault();
+                addFiles(e.dataTransfer.files);
               }}
-              style={{
-                position: "absolute",
-                inset: 0,
-                width: "100%",
-                height: "100%",
-                opacity: 0,
-                cursor: "pointer",
-              }}
-            />
-          </label>
+            >
+              <p>
+                <strong>Clique para escolher</strong> ou arraste as fotos aqui
+              </p>
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={(e) => {
+                  addFiles(e.target.files);
+                  e.target.value = "";
+                }}
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  width: "100%",
+                  height: "100%",
+                  opacity: 0,
+                  cursor: "pointer",
+                }}
+              />
+            </label>
+          )}
           {fotos.length > 0 && (
             <div className="thumbs">
               {fotos.map((f, i) => (
