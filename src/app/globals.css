@@ -391,6 +391,65 @@ nav.scrolled {
   color: rgba(168, 152, 128, 0.6);
 }
 
+/* banner TikTok — aparece no topo da página */
+.tiktok-banner {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 200;
+  background: #2a1508;
+  border-top: 1px solid rgba(232, 168, 56, 0.4);
+  padding: 14px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.tiktok-banner-msg {
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.45;
+  margin: 0;
+}
+.tiktok-banner-msg strong {
+  color: var(--gold);
+}
+.tiktok-banner-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.tiktok-banner-btn {
+  display: inline-block;
+  padding: 9px 16px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+  text-decoration: none;
+  border: none;
+  transition: opacity 0.15s;
+}
+.tiktok-banner-btn:hover { opacity: 0.85; }
+.tiktok-banner-chrome {
+  background: var(--gold);
+  color: #1a0a00;
+}
+.tiktok-banner-copy {
+  background: transparent;
+  border: 1px solid rgba(232, 168, 56, 0.5);
+  color: var(--gold);
+}
+.tiktok-banner-tip {
+  color: var(--muted);
+  font-size: 12px;
+}
+.tiktok-banner-tip strong {
+  color: var(--text);
+}
+
 /* aviso TikTok browser */
 .tiktok-warn {
   border: 1px solid rgba(232, 168, 56, 0.45);

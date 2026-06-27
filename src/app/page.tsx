@@ -1,5 +1,6 @@
 import Form from "@/components/Form";
 import ScrollReveal from "@/components/ScrollReveal";
+import TikTokBanner from "@/components/TikTokBanner";
 
 const PRECO = process.env.NEXT_PUBLIC_PRECO || "29";
 
@@ -7,6 +8,8 @@ export default function Home() {
   return (
     <>
       <ScrollReveal />
+
+      <TikTokBanner />
 
       {/* NAV */}
       <nav id="mainnav">
