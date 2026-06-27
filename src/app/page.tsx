@@ -14,7 +14,7 @@ export default function Home() {
           <img src="/logo.png" alt="Site do Meu Pai" />
           <span>Site do Meu Pai</span>
         </a>
-        <a className="nav-cta" href="#nomePai">
+        <a className="nav-cta" href="#formulario">
           Criar agora
         </a>
       </nav>
@@ -34,7 +34,7 @@ export default function Home() {
             Um site só pra ele, com as suas fotos, a sua mensagem e a música que
             ele ama. Você faz em 5 minutos. Ele guarda pra sempre.
           </p>
-          <a className="hero-cta" href="#nomePai">
+          <a className="hero-cta" href="#formulario">
             Criar o site do meu pai
           </a>
           <p className="hero-note">
@@ -204,7 +204,7 @@ export default function Home() {
             O Dia dos Pais chega rápido.
             <br />A memória dura a vida toda.
           </h2>
-          <a className="hero-cta reveal reveal-d1" href="#nomePai">
+          <a className="hero-cta reveal reveal-d1" href="#formulario">
             Criar o site do meu pai
           </a>
         </div>

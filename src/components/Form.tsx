@@ -240,7 +240,7 @@ export default function Form() {
   // ── Formulário ──────────────────────────────────────────────────
   return (
     <div className="criar-grid">
-      <form onSubmit={handleSubmit} noValidate>
+      <form id="formulario" onSubmit={handleSubmit} noValidate>
         <div className="form-field">
           <label htmlFor="nomePai">Nome do seu pai</label>
           <input
@@ -308,7 +308,6 @@ export default function Form() {
           </label>
           <label
             className="dropzone"
-            htmlFor="foto-input"
             onDragOver={(e) => e.preventDefault()}
             onDrop={(e) => {
               e.preventDefault();
@@ -318,18 +317,24 @@ export default function Form() {
             <p>
               <strong>Clique para escolher</strong> ou arraste as fotos aqui
             </p>
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={(e) => {
+                addFiles(e.target.files);
+                e.target.value = "";
+              }}
+              style={{
+                position: "absolute",
+                inset: 0,
+                width: "100%",
+                height: "100%",
+                opacity: 0,
+                cursor: "pointer",
+              }}
+            />
           </label>
-          <input
-            id="foto-input"
-            type="file"
-            accept="image/*"
-            multiple
-            hidden
-            onChange={(e) => {
-              addFiles(e.target.files);
-              e.target.value = "";
-            }}
-          />
           {fotos.length > 0 && (
             <div className="thumbs">
               {fotos.map((f, i) => (
