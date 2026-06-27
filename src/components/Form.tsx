@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import Preview from "./Preview";
 import { youtubeId } from "@/lib/youtube";
 import { apiClient } from "@/lib/apiClient";
@@ -27,7 +27,7 @@ export default function Form() {
   const [confirmNova, setConfirmNova] = useState(false);
   const [gerandoIA, setGerandoIA] = useState(false);
   const [tentativasIA, setTentativasIA] = useState(0);
-  const inputRef = useRef<HTMLInputElement>(null);
+
 
   const MAX_TENTATIVAS_IA = 3;
 
@@ -306,9 +306,9 @@ export default function Form() {
               {fotos.length}/{MAX_FOTOS}
             </span>
           </label>
-          <div
+          <label
             className="dropzone"
-            onClick={() => inputRef.current?.click()}
+            htmlFor="foto-input"
             onDragOver={(e) => e.preventDefault()}
             onDrop={(e) => {
               e.preventDefault();
@@ -318,9 +318,9 @@ export default function Form() {
             <p>
               <strong>Clique para escolher</strong> ou arraste as fotos aqui
             </p>
-          </div>
+          </label>
           <input
-            ref={inputRef}
+            id="foto-input"
             type="file"
             accept="image/*"
             multiple
