@@ -8,8 +8,17 @@ import WaitingView from "@/components/WaitingView";
 // Sempre busca dados frescos — status muda via webhook assíncrono.
 export const dynamic = "force-dynamic";
 
+// Garante que a URL sempre tenha protocolo (https://) e sem barra no final,
+// pra o link compartilhado (WhatsApp etc.) ser absoluto e não cair em 404.
+function withProtocol(url: string): string {
+  const trimmed = url.trim().replace(/\/+$/, "");
+  if (!trimmed) return "";
+  return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+}
+
 function baseUrl(): string {
-  if (process.env.NEXT_PUBLIC_SITE_URL) return process.env.NEXT_PUBLIC_SITE_URL;
+  if (process.env.NEXT_PUBLIC_SITE_URL)
+    return withProtocol(process.env.NEXT_PUBLIC_SITE_URL);
   const h = headers();
   const host = h.get("x-forwarded-host") || h.get("host");
   const proto = h.get("x-forwarded-proto") || "https";
