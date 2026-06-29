@@ -686,11 +686,14 @@ nav.scrolled {
 }
 .link-box {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   margin-bottom: 28px;
 }
 .link-box input {
-  flex: 1;
+  flex: 1 1 100%;
+  min-width: 0;
+  width: 100%;
   background: var(--bg-2);
   border: 1px solid rgba(245, 236, 215, 0.15);
   color: var(--text);
@@ -701,10 +704,12 @@ nav.scrolled {
 }
 .link-box button,
 .link-open-btn {
+  flex: 1 1 0;
+  min-width: 0;
   background: var(--bg-3);
   border: 1px solid rgba(232, 168, 56, 0.3);
   color: var(--text);
-  padding: 0 18px;
+  padding: 13px 18px;
   border-radius: 4px;
   cursor: pointer;
   font-size: 12px;
@@ -713,6 +718,7 @@ nav.scrolled {
   text-decoration: none;
   display: flex;
   align-items: center;
+  justify-content: center;
   white-space: nowrap;
 }
 .pay-btn {
@@ -1345,5 +1351,14 @@ footer .copy {
   }
   .gift-gallery {
     grid-template-columns: 1fr;
+  }
+  .done-overlay {
+    padding: 16px;
+  }
+  .done-card {
+    padding: 40px 22px;
+  }
+  .done-card h3 {
+    font-size: 28px;
   }
 }
