@@ -11,9 +11,13 @@ export const dynamic = "force-dynamic";
 // Garante que a URL sempre tenha protocolo (https://) e sem barra no final,
 // pra o link compartilhado (WhatsApp etc.) ser absoluto e não cair em 404.
 function withProtocol(url: string): string {
-  const trimmed = url.trim().replace(/\/+$/, "");
-  if (!trimmed) return "";
-  return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+  // Remove espaços, caracteres parasitas no começo (ex.: "(") e barras no final.
+  const cleaned = url
+    .trim()
+    .replace(/^[^a-z0-9]+/i, "")
+    .replace(/\/+$/, "");
+  if (!cleaned) return "";
+  return /^https?:\/\//i.test(cleaned) ? cleaned : `https://${cleaned}`;
 }
 
 function baseUrl(): string {
