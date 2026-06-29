@@ -4,6 +4,9 @@ import { useEffect, useState } from "react";
 import Preview from "./Preview";
 import { youtubeId } from "@/lib/youtube";
 import { apiClient } from "@/lib/apiClient";
+import { ttqTrack } from "@/lib/ttq";
+
+const PRODUTO_NOME = "Site do Meu Pai";
 
 const MAX_FOTOS = 10;
 const CAKTO_URL =
@@ -36,6 +39,17 @@ export default function Form() {
   useEffect(() => {
     const ua = navigator.userAgent;
     setIsTikTokBrowser(/BytedanceWebview|BytedancePclient|trill|musical_ly/i.test(ua));
+  }, []);
+
+  // Topo do funil: comprador viu a oferta.
+  useEffect(() => {
+    ttqTrack("ViewContent", {
+      content_id: "site-do-meu-pai",
+      content_type: "product",
+      content_name: PRODUTO_NOME,
+      currency: "BRL",
+      value: Number(PRECO),
+    });
   }, []);
 
   // Restaura link e tentativas de IA do localStorage.
@@ -125,6 +139,18 @@ export default function Form() {
         fd,
       );
       setSlug(data.slug);
+      // Lead: presente criado (ainda não pago).
+      ttqTrack(
+        "CompleteRegistration",
+        {
+          content_id: data.slug,
+          content_type: "product",
+          content_name: PRODUTO_NOME,
+          currency: "BRL",
+          value: Number(PRECO),
+        },
+        `reg-${data.slug}`,
+      );
       try {
         localStorage.setItem(
           "ultimo_presente",
@@ -188,6 +214,20 @@ export default function Form() {
           href={pagar}
           target="_blank"
           rel="noopener noreferrer"
+          onClick={() =>
+            ttqTrack(
+              "InitiateCheckout",
+              {
+                content_id: slug,
+                content_type: "product",
+                content_name: PRODUTO_NOME,
+                currency: "BRL",
+                value: Number(PRECO),
+                quantity: 1,
+              },
+              `checkout-${slug}`,
+            )
+          }
         >
           Liberar o presente — R$ {PRECO}
         </a>

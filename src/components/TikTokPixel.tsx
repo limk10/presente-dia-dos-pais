@@ -1,7 +1,5 @@
 import Script from "next/script";
-
-// Pixel ID público do TikTok (exposto no client, como todo pixel de analytics).
-const TIKTOK_PIXEL_ID = "D9164JJC77U49J863MSG";
+import { TIKTOK_PIXEL_ID } from "@/lib/ttq";
 
 export default function TikTokPixel() {
   return (

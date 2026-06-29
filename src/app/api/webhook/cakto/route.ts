@@ -4,6 +4,9 @@ import {
   getPresentePorEmail,
   ativarPresentePorId,
 } from "@/lib/db";
+import { trackCompletePagamento } from "@/lib/tiktokEvents";
+
+const PRECO = Number(process.env.NEXT_PUBLIC_PRECO || "29");
 
 export const runtime = "nodejs";
 
@@ -83,6 +86,7 @@ export async function POST(req: NextRequest) {
 
   let ativado = false;
   let via = "";
+  let identificador: string | null = null;
 
   const slug = extrairSlug(payload);
   if (slug) {
@@ -90,7 +94,10 @@ export async function POST(req: NextRequest) {
       ativado = await updatePresenteStatus(slug, "ativo", {
         activated_at: new Date().toISOString(),
       });
-      if (ativado) via = "slug";
+      if (ativado) {
+        via = "slug";
+        identificador = slug;
+      }
     } catch (err) {
       console.error("[cakto webhook] erro ao ativar por slug:", err);
     }
@@ -103,12 +110,24 @@ export async function POST(req: NextRequest) {
         const row = await getPresentePorEmail(email);
         if (row) {
           ativado = await ativarPresentePorId(row.id);
-          if (ativado) via = "email";
+          if (ativado) {
+            via = "email";
+            identificador = row.id;
+          }
         }
       } catch (err) {
         console.error("[cakto webhook] erro ao ativar por email:", err);
       }
     }
+  }
+
+  // Conversão confirmada → dispara CompletePayment no TikTok (server-side).
+  if (ativado && identificador) {
+    await trackCompletePagamento({
+      identificador,
+      value: PRECO,
+      email: extrairEmail(payload),
+    });
   }
 
   if (!ativado) {
